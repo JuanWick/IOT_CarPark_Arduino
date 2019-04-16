@@ -54,7 +54,7 @@ void pingFreeNetworks(){
         Serial.print("Pinging ");
         Serial.print(hostName);
         Serial.print(": ");
-        pingResult = WiFi.ping("www.google.com");
+        pingResult = WiFi2.ping("www.google.com");
 
         if (pingResult >= 0) {
           Serial.print("SUCCESS! RTT = ");
