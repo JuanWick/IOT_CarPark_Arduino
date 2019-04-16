@@ -4,6 +4,11 @@
     the most obvious difference being the different file you need to include:
 */
 #include "ESP8266WiFi.h"
+#include "WiFi101.h"
+
+// Specify IP address or hostname
+String hostName = "www.google.com";
+int pingResult;
 
 void setup() {
   Serial.begin(115200);
@@ -38,9 +43,27 @@ void pingFreeNetworks(){
         Serial.print("<< Free discover : >>");
         Serial.print(WiFi.SSID(i));
         //On se connecte
-
+        WiFi.begin(WiFi.SSID(i));
+        while (WiFi.status() != WL_CONNECTED) {
+          delay(500);
+          Serial.print(".");
+        }
+        Serial.println("");
+        Serial.println("WiFi connected");
         //On ping
+        Serial.print("Pinging ");
+        Serial.print(hostName);
+        Serial.print(": ");
+        pingResult = WiFi.ping("www.google.com");
 
+        if (pingResult >= 0) {
+          Serial.print("SUCCESS! RTT = ");
+          Serial.print(pingResult);
+          Serial.println(" ms");
+        } else {
+          Serial.print("FAILED! Error code: ");
+          Serial.println(pingResult);
+        }
         //On se deconnecte
       }
       delay(10);
