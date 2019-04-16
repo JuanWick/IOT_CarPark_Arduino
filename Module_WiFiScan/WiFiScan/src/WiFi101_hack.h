@@ -73,10 +73,10 @@ typedef enum {
 	WL_PING_ERROR = -4
 } wl_ping_result_t;
 
-class WiFiClass
+class WiFiHackClass
 {
 public:
-	WiFiClass();
+	WiFiHackClass();
 
 	void setPins(int8_t cs, int8_t irq, int8_t rst, int8_t en = -1);
 
@@ -189,6 +189,6 @@ private:
 	uint8_t startProvision(const char *ssid, const char *url, uint8_t channel);
 };
 
-extern WiFiClass WiFi2;
+extern WiFiHackClass WiFi2;
 
 #endif /* WIFI_H */

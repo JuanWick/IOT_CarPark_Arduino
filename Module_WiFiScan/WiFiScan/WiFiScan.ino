@@ -4,7 +4,8 @@
     the most obvious difference being the different file you need to include:
 */
 #include "ESP8266WiFi.h"
-#include "WiFi101.h"
+#include "src/WiFi101_hack.h"
+#include "src/common/include/nm_common.h"
 
 // Specify IP address or hostname
 String hostName = "www.google.com";
