@@ -24,6 +24,7 @@ void setup() {
   i2c.begin(D6, D5);
   mpu6050.begin();
   servo1.attach(D7);
+  servo1.write(90);
 }
 
 void loop() {
