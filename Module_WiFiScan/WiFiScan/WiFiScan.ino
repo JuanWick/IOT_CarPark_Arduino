@@ -1,9 +1,12 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266Ping.h>
+#include <ESP8266HTTPClient.h>
 
-const char* ssid     = "SFR_6AF8";
-const char* password = "ashi4bbowhibriumanda";
+
+const char* ssid     = "AndroidAP0DCF";
+const char* password = "hyny0433";
 const char* remote_host = "www.google.com";
+const char* thingsboardServer = "http://demo.thingsboard.io/api/v1/GUmgsqDiPPDMpzsMklM7/telemetry";
 bool is_network_op = false;
 int current_ssid = 0;
 
@@ -17,6 +20,7 @@ void setup() {
 
 void loop() {
   connectWifi();
+  sendState();
 }
 
 void connectToNetworks() {
@@ -113,4 +117,26 @@ void connectWifi() {
   Serial.println("-----------------------------");
 
   delay(5000);
+}
+
+void sendState() {
+  String payload = "{";
+  payload += "\"isConnected\":"; 
+  payload += is_network_op; 
+  payload += "}";
+
+   HTTPClient http;
+  http.begin(thingsboardServer);
+  http.POST(payload);
+  http.end();
+  Serial.println("request sent");
+
+
+  Serial.println();
+  Serial.println("-----------------------------");
+  Serial.print(" STATE : ");
+  Serial.println(is_network_op);
+  Serial.println("-----------------------------");
+  Serial.println();
+
 }
