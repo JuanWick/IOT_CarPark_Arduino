@@ -16,7 +16,7 @@ void setup() {
 }
 
 void loop() {
-  testConnection();
+  connectWifi();
 }
 
 void connectToNetworks() {
@@ -86,7 +86,7 @@ void connectToNetworks() {
   }
 }
 
-bool makePingRequest(int i) {
+void makePingRequest(int i) {
   Serial.print("Pinging host ");
   Serial.println(remote_host);
 
@@ -94,18 +94,18 @@ bool makePingRequest(int i) {
     is_network_op = true;
     current_ssid = i;
     Serial.println("Success!!");
-    return true;
   } else {
     is_network_op = false;
     Serial.println("Error :(");
-    return false;
   }
   Serial.println("-----------------------------");
   Serial.println("");
 }
 
-void testConnection() {
-  if (!makePingRequest(current_ssid)) {
+void connectWifi() {
+  //On vérifie si la connection actuelle répond au ping, sinon on en cherche une autre
+  makePingRequest(current_ssid);
+  if (!is_network_op) {
     connectToNetworks();
   }
   Serial.print("Current Network : ");
