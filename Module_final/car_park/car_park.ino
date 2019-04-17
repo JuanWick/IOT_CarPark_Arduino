@@ -1,6 +1,7 @@
 #include <NewPingESP8266.h> // Capteur ultrason
 #include <MPU6050_tockn.h>
 #include <Wire.h>
+#include <Servo.h>
 
 int pinSpeaker = D4;
 int ledPin = D1;
@@ -14,12 +15,15 @@ TwoWire i2c;
 MPU6050 mpu6050(i2c);
 long timeStamp = 0;
 
+Servo servo1;
+
 void setup() {
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   pinMode(pinSpeaker, OUTPUT);
   i2c.begin(D6, D5);
   mpu6050.begin();
+  servo1.attach(D7);
 }
 
 void loop() {
@@ -78,9 +82,9 @@ void playTone(int duration, int tone_) {
 
 void impactAction() {
   printMessageImpact();
-  //servo1.write(0);
+  servo1.write(0);
   delay(700);
-  //servo1.write(90);
+  servo1.write(90);
 }
 
 void printMessageImpact() {
