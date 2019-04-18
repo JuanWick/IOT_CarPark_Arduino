@@ -6,6 +6,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266Ping.h>
 #include <ESP8266HTTPClient.h>
+#include <BlynkSimpleEsp8266.h>
+
+// Blynk constants
+const char AUTH[] = "9cb213f5a57e4c389d7cd5318ee4f643";
+BlynkTimer timer;
 
 // WiFi constants
 const char* WIFI_SSID = "Mfbiya";
@@ -53,6 +58,7 @@ void setup() {
   } else {
     show_message("Setup", "WIFI NOT FOUND", 255, 175, 31);
   }
+  setup_timer();
   show_message("Setup", "LED", 255, 175, 31);
   setup_led();
   show_message("Setup", "SOUND", 255, 175, 31);
@@ -65,6 +71,28 @@ void setup() {
 
   Serial.println("Setup done.");
 }
+
+/**
+   Setup BLINK.
+*/
+void setup_blink() {
+  if (is_network_op) {
+    if (WiFi.SSID(current_ssid) == WIFI_SSID) {
+      Blynk.begin(AUTH, WIFI_SSID, WIFI_PASSWORD);
+    } else {
+      Blynk.begin(AUTH, WIFI_SSID, "");
+    }
+    Blynk.run();
+  }
+}
+
+/**
+   Setup TIMER
+*/
+void setup_timer() {
+  timer.setInterval(5000L, is_alive_kpi); //timer will run every sec
+}
+
 
 /**
    Setup WIFI mode.
@@ -217,7 +245,7 @@ void print_message_distance(int distance) {
 }
 
 bool did_moved(int _x) {
-  if (_x >  0.8 || _x < 0) {
+  if (_x >  0.5 || _x < 0) {
     return true;
   }
   return false;
@@ -247,7 +275,7 @@ void distance_detection_handler() {
    Handle GIRO detection and feedback
 */
 void colision_detection_handler() {
-  if (millis() - timeStamp > 2) {
+  if (millis() - timeStamp > 10) {
     mpu6050.update();
     if (did_moved(mpu6050.getAccZ()) == true) {
       impact_event();
@@ -283,6 +311,7 @@ void make_ping_request(int i) {
   if (Ping.ping(PING_HOST)) {
     is_network_op = true;
     current_ssid = i;
+
     Serial.println("Success!!");
   } else {
     is_network_op = false;
@@ -292,10 +321,17 @@ void make_ping_request(int i) {
   Serial.println("");
 }
 
+void is_alive_kpi()
+{
+  Blynk.virtualWrite(V1, "OK");  // sending sensor value to Blynk app
+  send_connection_state();
+}
+
 /**
    Scan and try to connect to any open network or known wifi network
 */
 void connect_to_available_networks() {
+
   Serial.println("-- Try Connecting --");
   Serial.println();
 
@@ -328,6 +364,7 @@ void connect_to_available_networks() {
           Serial.println(WiFi.localIP());
           delay(200);
           make_ping_request(i);
+          setup_blink();
         } else {
           Serial.println();
           Serial.println("WiFi connection time out");
@@ -353,17 +390,19 @@ void connect_to_available_networks() {
           Serial.println(WiFi.localIP());
           delay(200);
           make_ping_request(i);
+          setup_blink();
         }
       }
       delay(10);
     }
   }
+
 }
 
 /**
    Send current state information
 */
-void send_state(String payload) {
+void send_state_using_post(String payload) {
   HTTPClient http;
   http.begin(THINGSBOARD_SERVER);
   http.POST(payload);
@@ -372,7 +411,19 @@ void send_state(String payload) {
   Serial.println();
   Serial.println("-----------------------------");
   Serial.println("request sent");
-  Serial.print(" STATE : ");
+  Serial.print(" STATE POST : ");
+  Serial.println(payload);
+  Serial.println("-----------------------------");
+  Serial.println();
+}
+
+void send_state_using_blynk(String payload) {
+  Blynk.notify(payload);
+
+  Serial.println();
+  Serial.println("-----------------------------");
+  Serial.println("request sent");
+  Serial.print(" STATE BLYNK : ");
   Serial.println(payload);
   Serial.println("-----------------------------");
   Serial.println();
@@ -387,7 +438,7 @@ void send_connection_state() {
     payload += "\"isConnected\":";
     payload += is_network_op;
     payload += "}";
-    send_state(payload);
+    send_state_using_post(payload);
   }
 }
 
@@ -400,7 +451,8 @@ void send_colide_state() {
     payload += "\"collideEvent\":";
     payload += true;
     payload += "}";
-    send_state(payload);
+    send_state_using_post(payload);
+    send_state_using_blynk("Your car is in danger !");
   }
 }
 
@@ -408,7 +460,9 @@ void send_colide_state() {
    ESP event loop.
 */
 void loop() {
+
+
+  timer.run();        // run timer every second
   distance_detection_handler();
   colision_detection_handler();
-  send_connection_state();
 }
