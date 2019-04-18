@@ -93,7 +93,7 @@ void setup_blink() {
 */
 void setup_timer() {
   timer.setInterval(5000L, is_alive_kpi); //timer will run every 5 sec
-  timer_distance.setInterval(250L, get_distance); 
+  timer_distance.setInterval(250L, get_distance);
 }
 
 
@@ -172,14 +172,15 @@ void show_message(char* message_haut, char* message_bas, int red, int green, int
   ecranRGB.print(message_haut);
   ecranRGB.setCursor(0, 1);
   ecranRGB.print(message_bas);
-  delay(timer);
+  if (timer > 0) {
+    delay(timer);
+  }
 }
 
 /**
    Evaluate sonar distance detection
 */
 void get_distance() {
-  //delay(40);
   distance = sonar.ping() / US_ROUNDTRIP_CM;
 }
 
@@ -206,7 +207,7 @@ void play_tone(int duration, int tone_) {
    Actions done when impact is detected
 */
 void impact_event() {
-  print_message_impact_event();
+  show_message("Touche !", "", 255, 0, 0, 0);
   servo1.write(0);
   delay(700);
   servo1.write(90);
@@ -216,43 +217,31 @@ void impact_event() {
 }
 
 /**
-   Print impact feedback to the LCD screen
-*/
-void print_message_impact_event() {
-  ecranRGB.clear();
-  ecranRGB.setRGB(255, 0, 0);
-  ecranRGB.setCursor(0, 0);
-  ecranRGB.print("Touche !");
-}
-
-/**
    Print distance feedback to the LCD screen
 */
 void print_message_distance(int distance) {
-  ecranRGB.clear();
-  if (distance != 0) {
-    if (distance <= 5) {
-      ecranRGB.setRGB(255, 0, 0);
-    } else if (distance <= 10 ) {
-      ecranRGB.setRGB(255, 165, 0);
-    } else {
-      ecranRGB.setRGB(165, 255, 0);
-    }
-  } else {
-    ecranRGB.setRGB(165, 255, 0);
+  int red = 0;
+  int green = 165;
+  int blue = 255;
+
+  if (distance != 0 && distance <= 5) {
+    red = 255;
+    green = 0;
+    blue = 0;
+  } else if (distance != 0 && distance <= 10 ) {
+    red = 255;
+    green = 165;
+    blue = 0;
   }
-  ecranRGB.setCursor(0, 0);
-  ecranRGB.print("Vous etes a :");
-  ecranRGB.setCursor(0, 1);
-  ecranRGB.print(distance);
-  ecranRGB.print(" cm");
+
+  String str = String(distance);
+  char char_distance[16];
+  str.toCharArray(char_distance,16);
+  show_message("Vous etes a (cm) :", char_distance, red, blue, green, 0);
 }
 
 bool did_moved(int _x) {
-  if (_x >  0.5 || _x < 0) {
-    return true;
-  }
-  return false;
+  return _x >  0.5 || _x < 0;
 }
 
 /**
@@ -300,8 +289,6 @@ void internet_connection_handler() {
   Serial.print("Current Network : ");
   Serial.println(WiFi.SSID(current_ssid));
   Serial.println("-----------------------------");
-
-  delay(5000);
 }
 
 /**
@@ -464,8 +451,7 @@ void send_colide_state() {
 */
 void loop() {
 
-
-  timer.run();        // run timer every second
+  timer.run();
   timer_distance.run();
   distance_detection_handler();
   colision_detection_handler();
