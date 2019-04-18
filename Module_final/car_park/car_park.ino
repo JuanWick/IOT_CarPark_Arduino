@@ -11,6 +11,8 @@
 // Blynk constants
 const char AUTH[] = "9cb213f5a57e4c389d7cd5318ee4f643";
 BlynkTimer timer;
+BlynkTimer timer_distance;
+
 
 // WiFi constants
 const char* WIFI_SSID = "Mfbiya";
@@ -50,24 +52,24 @@ void setup() {
   Serial.begin(115200);
 
   setup_lcd();
-  show_message("Setup", ".....", 255, 175, 31);
-  show_message("Setup", "WIFI", 255, 175, 31);
+  show_message("Setup", ".....", 255, 175, 31, 2000);
+  show_message("Setup", "WIFI", 255, 175, 31, 2000);
   setup_wifi();
   if (is_network_op) {
-    show_message("Setup", "WIFI FOUND", 255, 175, 31);
+    show_message("Setup", "WIFI FOUND", 255, 175, 31, 2000);
   } else {
-    show_message("Setup", "WIFI NOT FOUND", 255, 175, 31);
+    show_message("Setup", "WIFI NOT FOUND", 255, 175, 31, 2000);
   }
   setup_timer();
-  show_message("Setup", "LED", 255, 175, 31);
+  show_message("Setup", "LED", 255, 175, 31, 2000);
   setup_led();
-  show_message("Setup", "SOUND", 255, 175, 31);
+  show_message("Setup", "SOUND", 255, 175, 31, 2000);
   setup_hp();
-  show_message("Setup", "GIRO", 255, 175, 31);
+  show_message("Setup", "GIRO", 255, 175, 31, 2000);
   setup_giro();
-  show_message("Setup", "SERVO", 255, 175, 31);
+  show_message("Setup", "SERVO", 255, 175, 31, 2000);
   setup_servo();
-  show_message("Setup done", ":-)", 255, 175, 31);
+  show_message("Setup done", ":-)", 255, 175, 31, 2000);
 
   Serial.println("Setup done.");
 }
@@ -90,7 +92,8 @@ void setup_blink() {
    Setup TIMER
 */
 void setup_timer() {
-  timer.setInterval(5000L, is_alive_kpi); //timer will run every sec
+  timer.setInterval(5000L, is_alive_kpi); //timer will run every 5 sec
+  timer_distance.setInterval(250L, get_distance); 
 }
 
 
@@ -108,17 +111,12 @@ void setup_wifi() {
 */
 void setup_led() {
   pinMode(PIN_LED, OUTPUT);
+  randomSeed(42);
 
-  digitalWrite(PIN_LED, HIGH);
-  delay(50);
-  digitalWrite(PIN_LED, LOW);
-  delay(50);
-  digitalWrite(PIN_LED, HIGH);
-  delay(50);
-  digitalWrite(PIN_LED, LOW);
-  delay(50);
-  digitalWrite(PIN_LED, HIGH);
-  delay(50);
+  for (int i = 0; i < 50; i++) {
+    digitalWrite(PIN_LED, !digitalRead(PIN_LED));
+    delay(random(50, 200));
+  }
   digitalWrite(PIN_LED, LOW);
 }
 
@@ -128,8 +126,10 @@ void setup_led() {
 void setup_hp() {
   pinMode(PIN_SPEAKER, OUTPUT);
 
-  digitalWrite(PIN_SPEAKER, HIGH);
-  delay(100);
+  for (int i = 0; i < 15; i++) {
+    digitalWrite(PIN_SPEAKER, !digitalRead(PIN_SPEAKER));
+    delay(random(50, 200));
+  }
   digitalWrite(PIN_SPEAKER, LOW);
 }
 
@@ -151,7 +151,6 @@ void setup_servo() {
   servo1.write(0);
   delay(500);
   servo1.write(90);
-
 }
 
 /**
@@ -159,24 +158,29 @@ void setup_servo() {
 */
 void setup_lcd() {
   ecranRGB.begin(16, 2, 0x00);
+  for (int i = 0; i < 100; i++) {
+    ecranRGB.clear();
+    ecranRGB.setRGB(random(0, 255), random(0, 255), random(0, 255));
+    delay(20);
+  }
 }
 
-void show_message(char* message_haut, char* message_bas, int red, int green, int blue) {
+void show_message(char* message_haut, char* message_bas, int red, int green, int blue, int timer) {
   ecranRGB.clear();
   ecranRGB.setRGB(red, green, blue);
   ecranRGB.setCursor(0, 0);
   ecranRGB.print(message_haut);
   ecranRGB.setCursor(0, 1);
   ecranRGB.print(message_bas);
-  delay(2000);
+  delay(timer);
 }
 
 /**
    Evaluate sonar distance detection
 */
-int get_distance() {
-  delay(40);
-  return sonar.ping() / US_ROUNDTRIP_CM;
+void get_distance() {
+  //delay(40);
+  distance = sonar.ping() / US_ROUNDTRIP_CM;
 }
 
 /**
@@ -255,7 +259,6 @@ bool did_moved(int _x) {
    Handler Sonar feedback to LCD and LED
 */
 void distance_detection_handler() {
-  distance = get_distance();
   unsigned long currentTime = millis();
 
   if (currentTime - prev > distance * 10 && distance > 0 && distance <= 25) {
@@ -463,6 +466,7 @@ void loop() {
 
 
   timer.run();        // run timer every second
+  timer_distance.run();
   distance_detection_handler();
   colision_detection_handler();
 }
