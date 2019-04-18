@@ -247,7 +247,7 @@ void distance_detection_handler() {
    Handle GIRO detection and feedback
 */
 void colision_detection_handler() {
-  if (millis() - timeStamp > 10) {
+  if (millis() - timeStamp > 2) {
     mpu6050.update();
     if (did_moved(mpu6050.getAccZ()) == true) {
       impact_event();
@@ -262,7 +262,9 @@ void colision_detection_handler() {
 void internet_connection_handler() {
   make_ping_request(current_ssid);
   if (!is_network_op) {
-    connect_to_available_networks();
+    while (WiFi.status() != WL_CONNECTED && !is_network_op) {
+      connect_to_available_networks();
+    }
   }
   Serial.print("Current Network : ");
   Serial.println(WiFi.SSID(current_ssid));
@@ -294,69 +296,66 @@ void make_ping_request(int i) {
    Scan and try to connect to any open network or known wifi network
 */
 void connect_to_available_networks() {
-  while (WiFi.status() != WL_CONNECTED && !is_network_op) {
+  Serial.println("-- Try Connecting --");
+  Serial.println();
 
-    Serial.println("-- Try Connecting --");
-    Serial.println();
+  int n = WiFi.scanNetworks();
 
-    int n = WiFi.scanNetworks();
+  if (n == 0) {
+    Serial.println("no networks found");
+  } else {
+    Serial.print(n);
+    Serial.println(" networks found.");
 
-    if (n == 0) {
-      Serial.println("no networks found");
-    } else {
-      Serial.print(n);
-      Serial.println(" networks found.");
+    // Check open networks
+    for (int i = 0; i < n; ++i) {
+      if (WiFi.encryptionType(i) == ENC_TYPE_NONE && !is_network_op) {
+        Serial.println("-----------------------------");
+        Serial.print("Open Network discover : ");
+        Serial.println(WiFi.SSID(i));
 
-      // Check open networks
-      for (int i = 0; i < n; ++i) {
-        if (WiFi.encryptionType(i) == ENC_TYPE_NONE && !is_network_op) {
+        WiFi.begin(WiFi.SSID(i));
+
+        int nbAttempts = 0;
+        while (WiFi.status() != WL_CONNECTED && nbAttempts < WIFI_UNKNOWN_RETRY_DELAY) {
+          nbAttempts++;
+          delay(500);
+          Serial.print(".");
+        }
+        if (WiFi.status() == WL_CONNECTED) {
+          Serial.println("");
+          Serial.print("WiFi connected with ip ");
+          Serial.println(WiFi.localIP());
+          delay(200);
+          make_ping_request(i);
+        } else {
+          Serial.println();
+          Serial.println("WiFi connection time out");
           Serial.println("-----------------------------");
-          Serial.print("Open Network discover : ");
+          Serial.println("");
+        }
+
+      } else {
+        if ((WiFi.SSID(i) == WIFI_SSID) && !is_network_op) {
+          Serial.println("-----------------------------");
+          Serial.print("Known Network discover : ");
           Serial.println(WiFi.SSID(i));
-
-          WiFi.begin(WiFi.SSID(i));
-
+          WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
           int nbAttempts = 0;
-          while (WiFi.status() != WL_CONNECTED && nbAttempts < WIFI_UNKNOWN_RETRY_DELAY) {
+
+          while (WiFi.status() != WL_CONNECTED  && nbAttempts < WIFI_KNOWN_RETRY_DELAY) {
             nbAttempts++;
-            delay(500);
+            delay(100);
             Serial.print(".");
           }
-          if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("");
-            Serial.print("WiFi connected with ip ");
-            Serial.println(WiFi.localIP());
-            delay(200);
-            make_ping_request(i);
-          } else {
-            Serial.println();
-            Serial.println("WiFi connection time out");
-            Serial.println("-----------------------------");
-            Serial.println("");
-          }
-
-        } else {
-          if ((WiFi.SSID(i) == WIFI_SSID) && !is_network_op) {
-            Serial.println("-----------------------------");
-            Serial.print("Known Network discover : ");
-            Serial.println(WiFi.SSID(i));
-            WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-            int nbAttempts = 0;
-
-            while (WiFi.status() != WL_CONNECTED  && nbAttempts < WIFI_KNOWN_RETRY_DELAY) {
-              nbAttempts++;
-              delay(100);
-              Serial.print(".");
-            }
-            Serial.println("");
-            Serial.print("WiFi connected with ip ");
-            Serial.println(WiFi.localIP());
-            delay(200);
-            make_ping_request(i);
-          }
+          Serial.println("");
+          Serial.print("WiFi connected with ip ");
+          Serial.println(WiFi.localIP());
+          delay(200);
+          make_ping_request(i);
         }
-        delay(10);
       }
+      delay(10);
     }
   }
 }
