@@ -37,7 +37,7 @@ NewPingESP8266 sonar(D0, D5, 200);
 int distance = 0;
 long prev = 0;
 
-// GIRO+ACC constants
+// GYRO+ACC constants
 TwoWire i2c;
 MPU6050 mpu6050(i2c);
 long timeStamp = 0;
@@ -65,7 +65,7 @@ void setup() {
   setup_led();
   show_message("Setup", "SOUND", 255, 175, 31, 2000);
   setup_hp();
-  show_message("Setup", "GIRO", 255, 175, 31, 2000);
+  show_message("Setup", "ACCELERO", 255, 175, 31, 2000);
   setup_giro();
   show_message("Setup", "SERVO", 255, 175, 31, 2000);
   setup_servo();
@@ -134,7 +134,7 @@ void setup_hp() {
 }
 
 /**
-   Setup GIRO+ACC mode.
+   Setup GYRO+ACC mode.
 */
 void setup_giro() {
   i2c.begin(D2, D1);
@@ -264,7 +264,7 @@ void distance_detection_handler() {
 }
 
 /**
-   Handle GIRO detection and feedback
+   Handle ACCELERO detection and feedback
 */
 void colision_detection_handler() {
   if (millis() - timeStamp > 10) {
