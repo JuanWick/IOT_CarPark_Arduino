@@ -1,4 +1,4 @@
-# Welcome to the IOT_CarPark_Arduino wiki !
+# Welcome to the IOT_CarPark_Arduino project !
 
 This project consists on creating a parking helper, a radar on the parking process.
 
